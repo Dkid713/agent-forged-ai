@@ -1,0 +1,14 @@
+{
+  "name": "cruxagi-seed-safe",
+  "scripts": {
+    "seed": "ts-node organism.ts"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20",
+    "openai": "^4"
+  },
+  "devDependencies": {
+    "ts-node": "^10",
+    "typescript": "^5"
+  }
+}
