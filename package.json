@@ -1,0 +1,18 @@
+{
+  "name": "agent-forged-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node dist/server/src/index.js",
+    "evolution": "node dist/server/athena/evolution-loop.js"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.28",
+    "typescript": "^5.4.5"
+  }
+}
