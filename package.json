@@ -1,0 +1,26 @@
+{
+  "name": "agent-forged-ai",
+  "version": "1.0.0",
+  "description": "Autonomous AGI microservice for repository automation.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server/autonomous-server.js",
+    "dev": "ts-node src/server/autonomous-server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^20.1.1",
+    "express": "^4.19.2",
+    "openai": "^4.52.1",
+    "simple-git": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
