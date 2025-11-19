@@ -35,12 +35,23 @@ if (!GITHUB_OWNER || !GITHUB_REPO) {
   throw new Error('GITHUB_OWNER and GITHUB_REPO environment variables are required')
 }
 
+const repoRoot = process.cwd()
+
 const app = express()
 app.use(express.json({ limit: '5mb' }))
 
 const openai = new OpenAI({ apiKey: OPENAI_KEY })
-const git: SimpleGit = simpleGit(process.cwd())
+const git: SimpleGit = simpleGit(repoRoot)
 const octokit = new Octokit({ auth: GITHUB_TOKEN })
+
+const resolvePathWithinRepo = (filepath: string): string => {
+  const absolutePath = path.resolve(repoRoot, filepath)
+  const relativePath = path.relative(repoRoot, absolutePath)
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    throw new Error('Access outside the repository root is not allowed')
+  }
+  return absolutePath
+}
 
 const functions: FunctionDefinition[] = [
   {
@@ -170,7 +181,7 @@ const fnHandlers: HandlerMap = {
     if (typeof filepath !== 'string') {
       throw new Error('filepath must be a string')
     }
-    const absolutePath = path.resolve(process.cwd(), filepath)
+    const absolutePath = resolvePathWithinRepo(filepath)
     const content = await fs.readFile(absolutePath, 'utf-8')
     return { content }
   },
@@ -178,7 +189,7 @@ const fnHandlers: HandlerMap = {
     if (typeof filepath !== 'string' || typeof content !== 'string') {
       throw new Error('filepath and content must be strings')
     }
-    const absolutePath = path.resolve(process.cwd(), filepath)
+    const absolutePath = resolvePathWithinRepo(filepath)
     await fs.writeFile(absolutePath, content, 'utf-8')
     return { success: true }
   },
