@@ -1,8 +1,18 @@
 import fs from "node:fs"
 import path from "node:path"
-import { AthenaConfig } from "../types/core"
+import type { AthenaConfig } from "../types/core"
+
+const DEFAULT_CONFIG_PATH = path.join(
+  process.cwd(),
+  "src",
+  "crux-agi-core",
+  "config",
+  "athena.config.yml"
+)
 
 const defaultConfig: AthenaConfig = {
+  service: "crux-agi-core",
+  version: 1,
   gen1: {
     enabled: true,
     maxExpansionRatio: 1,
@@ -70,30 +80,28 @@ function parseBasicYaml(content: string): Record<string, unknown> {
   return root
 }
 
-export function loadAthenaConfig(configPath?: string): AthenaConfig {
-  const p =
-    configPath ??
-    path.join(process.cwd(), "src", "crux-agi-core", "config", "athena.config.yml")
-  if (!fs.existsSync(p)) {
+function mergeConfig(
+  defaults: AthenaConfig,
+  overrides: Partial<AthenaConfig>
+): AthenaConfig {
+  return {
+    ...defaults,
+    ...overrides,
+    gen1: { ...defaults.gen1, ...(overrides.gen1 ?? {}) },
+    gen2: { ...defaults.gen2, ...(overrides.gen2 ?? {}) },
+    gen3: { ...defaults.gen3, ...(overrides.gen3 ?? {}) },
+    feedback: { ...defaults.feedback, ...(overrides.feedback ?? {}) },
+    telemetry: { ...defaults.telemetry, ...(overrides.telemetry ?? {}) }
+  }
+}
+
+export function loadAthenaConfig(configPath: string = DEFAULT_CONFIG_PATH): AthenaConfig {
+  if (!fs.existsSync(configPath)) {
     return defaultConfig
   }
 
-  const raw = fs.readFileSync(p, "utf-8")
-  const parsed = parseBasicYaml(raw)
+  const raw = fs.readFileSync(configPath, "utf-8")
+  const parsed = parseBasicYaml(raw) as Partial<AthenaConfig>
 
-  return {
-    ...defaultConfig,
-    ...parsed,
-    gen1: { ...defaultConfig.gen1, ...(parsed.gen1 as Record<string, unknown> | undefined) },
-    gen2: { ...defaultConfig.gen2, ...(parsed.gen2 as Record<string, unknown> | undefined) },
-    gen3: { ...defaultConfig.gen3, ...(parsed.gen3 as Record<string, unknown> | undefined) },
-    feedback: {
-      ...defaultConfig.feedback,
-      ...(parsed.feedback as Record<string, unknown> | undefined)
-    },
-    telemetry: {
-      ...defaultConfig.telemetry,
-      ...(parsed.telemetry as Record<string, unknown> | undefined)
-    }
-  }
+  return mergeConfig(defaultConfig, parsed)
 }
