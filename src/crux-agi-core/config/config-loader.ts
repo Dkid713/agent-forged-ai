@@ -3,13 +3,10 @@ import path from "node:path"
 import { defaultAthenaConfig } from "../../shared/athena-core/config"
 import type { AthenaConfig } from "../types/core"
 
-const DEFAULT_CONFIG_PATH = path.join(
-  process.cwd(),
-  "src",
-  "crux-agi-core",
-  "config",
-  "athena.config.yml"
-)
+const DEFAULT_CONFIG_PATHS = [
+  path.join(process.cwd(), "config", "athena.config.yml"),
+  path.join(process.cwd(), "src", "crux-agi-core", "config", "athena.config.yml")
+]
 
 function parseScalar(value: string): unknown {
   const normalized = value.trim()
@@ -65,12 +62,17 @@ function mergeConfig(
   }
 }
 
-export function loadAthenaConfig(configPath: string = DEFAULT_CONFIG_PATH): AthenaConfig {
-  if (!fs.existsSync(configPath)) {
+export function loadAthenaConfig(
+  configPath: string = DEFAULT_CONFIG_PATHS[0]
+): AthenaConfig {
+  const searchPaths = [configPath, ...DEFAULT_CONFIG_PATHS.filter((candidate) => candidate !== configPath)]
+  const resolvedPath = searchPaths.find((candidate) => fs.existsSync(candidate))
+
+  if (!resolvedPath) {
     return defaultAthenaConfig
   }
 
-  const raw = fs.readFileSync(configPath, "utf-8")
+  const raw = fs.readFileSync(resolvedPath, "utf-8")
   const parsed = parseBasicYaml(raw) as Partial<AthenaConfig>
 
   return mergeConfig(defaultAthenaConfig, parsed)
