@@ -1,0 +1,7 @@
+version: 1
+service: athena-core
+telemetry:
+  enabled: true
+  sampleRate: 1.0
+gen1:
+  rulesetVersion: "1.0"
