@@ -76,6 +76,14 @@ Run these to confirm both compression paths behave as expected on your machine:
 
 The second run should include `[AthenaCore]` log lines while keeping the same response schema.
 
+## Repository layout
+
+- `src/`: application source code.
+- `config/`: central configuration, including `athena.config.yml` shared by Athena-aware components.
+- `docs/`: project documentation and integration notes.
+- `scripts/`: helper scripts such as `clone_cruxagi.sh`.
+- `tests/`: home for automated tests (placeholder until suites are added).
+
 ## Endpoint behavior
 
 - **Request body**: `{ "id?": string, "text"?: string, "message"?: string }` (`text` and `message` are interchangeable).
@@ -84,7 +92,7 @@ The second run should include `[AthenaCore]` log lines while keeping the same re
 
 ## Athena configuration
 
-Athena Core reads from `src/server/athena-core/config/athena.config.yml`. Default values are shared across server code, the Crux AGI utilities, and the shared config types. You can adjust the YAML if you need to tune defaults.
+Athena Core reads from `config/athena.config.yml`. Default values are shared across server code, the Crux AGI utilities, and the shared config types. You can adjust the YAML if you need to tune defaults; the loaders will also fall back to legacy paths under `src/**/config/athena.config.yml` if needed.
 
 ## Notes on optional dependencies
 

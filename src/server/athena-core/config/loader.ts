@@ -45,6 +45,7 @@ function parseBasicYaml(content: string): Record<string, unknown> {
 }
 
 const candidatePaths = [
+  path.join(process.cwd(), 'config', CONFIG_FILENAME),
   path.join(__dirname, CONFIG_FILENAME),
   path.join(process.cwd(), 'src', 'server', 'athena-core', 'config', CONFIG_FILENAME)
 ]
