@@ -24,8 +24,27 @@ export interface AthenaConfig {
   telemetry: {
     enabled: boolean
     sampleRate: number
+    kpiWindowSize: number
   }
   gen1: {
+    enabled: boolean
+    maxExpansionRatio: number
     rulesetVersion: string
+  }
+  gen2: {
+    enabled: boolean
+    dictionaryVersion: string
+    minSavingsTokens: number
+  }
+  gen3: {
+    enabled: boolean
+    model: string
+    minClusterSize: number
+    minConceptGain: number
+  }
+  feedback: {
+    enabled: boolean
+    minDeltaSavingsTokens: number
+    safetyFirst: boolean
   }
 }

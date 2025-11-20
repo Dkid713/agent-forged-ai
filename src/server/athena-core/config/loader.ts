@@ -9,10 +9,29 @@ const defaultConfig: AthenaConfig = {
   service: 'athena-core',
   telemetry: {
     enabled: true,
-    sampleRate: 1
+    sampleRate: 1,
+    kpiWindowSize: 10000
   },
   gen1: {
+    enabled: true,
+    maxExpansionRatio: 1,
     rulesetVersion: '1.0'
+  },
+  gen2: {
+    enabled: true,
+    dictionaryVersion: '1.0',
+    minSavingsTokens: 4
+  },
+  gen3: {
+    enabled: true,
+    model: 'text-embeddings',
+    minClusterSize: 12,
+    minConceptGain: 128
+  },
+  feedback: {
+    enabled: true,
+    minDeltaSavingsTokens: 64,
+    safetyFirst: true
   }
 }
 
@@ -79,6 +98,18 @@ export function loadAthenaConfig(): AthenaConfig {
     gen1: {
       ...defaultConfig.gen1,
       ...(parsed?.gen1 ?? {})
+    },
+    gen2: {
+      ...defaultConfig.gen2,
+      ...(parsed?.gen2 ?? {})
+    },
+    gen3: {
+      ...defaultConfig.gen3,
+      ...(parsed?.gen3 ?? {})
+    },
+    feedback: {
+      ...defaultConfig.feedback,
+      ...(parsed?.feedback ?? {})
     }
   }
 }
