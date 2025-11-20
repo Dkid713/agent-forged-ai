@@ -1,3 +1,5 @@
+import type { AthenaConfig } from '../../../shared/athena-core/config'
+
 export interface CompressionInput {
   id: string
   text: string
@@ -18,33 +20,4 @@ export interface LayerContext {
   config: AthenaConfig
 }
 
-export interface AthenaConfig {
-  version: number
-  service: string
-  telemetry: {
-    enabled: boolean
-    sampleRate: number
-    kpiWindowSize: number
-  }
-  gen1: {
-    enabled: boolean
-    maxExpansionRatio: number
-    rulesetVersion: string
-  }
-  gen2: {
-    enabled: boolean
-    dictionaryVersion: string
-    minSavingsTokens: number
-  }
-  gen3: {
-    enabled: boolean
-    model: string
-    minClusterSize: number
-    minConceptGain: number
-  }
-  feedback: {
-    enabled: boolean
-    minDeltaSavingsTokens: number
-    safetyFirst: boolean
-  }
-}
+export type { AthenaConfig }

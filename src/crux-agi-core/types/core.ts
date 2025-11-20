@@ -1,3 +1,12 @@
+import type {
+  AthenaConfig,
+  FeedbackConfig,
+  Gen1Config,
+  Gen2Config,
+  Gen3Config,
+  TelemetryConfig
+} from "../../shared/athena-core/config";
+
 export type LayerName = "gen1" | "gen2" | "gen3";
 
 export interface CompressionInput {
@@ -37,42 +46,11 @@ export interface LayerContext {
   // extensible for caches, embeddings, etc.
 }
 
-export interface AthenaConfig {
-  gen1: Gen1Config;
-  gen2: Gen2Config;
-  gen3: Gen3Config;
-  feedback: FeedbackConfig;
-  telemetry: TelemetryConfig;
-}
-
-// Forward declarations to keep this modular
-export interface Gen1Config {
-  enabled: boolean;
-  maxExpansionRatio: number; // e.g. 1.00, 0.8, etc.
-  rulesetVersion: string;
-}
-
-export interface Gen2Config {
-  enabled: boolean;
-  dictionaryVersion: string;
-  minSavingsTokens: number;
-}
-
-export interface Gen3Config {
-  enabled: boolean;
-  model: "text-embeddings" | "custom";
-  minClusterSize: number;
-  minConceptGain: number;
-}
-
-export interface FeedbackConfig {
-  enabled: boolean;
-  minDeltaSavingsTokens: number;
-  safetyFirst: boolean;
-}
-
-export interface TelemetryConfig {
-  enabled: boolean;
-  sampleRate: number; // 0..1
-  kpiWindowSize: number; // e.g. 10_000 docs
-}
+export type {
+  AthenaConfig,
+  FeedbackConfig,
+  Gen1Config,
+  Gen2Config,
+  Gen3Config,
+  TelemetryConfig
+};

@@ -10,6 +10,11 @@ import path from 'path'
 import { spawnSync } from 'child_process'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { Octokit } from '@octokit/rest'
+import { compressWithAthena } from './athena-core'
+import type {
+  CompressionInput as AthenaCompressionInput,
+  CompressionOutput as AthenaCompressionOutput
+} from './athena-core'
 
 type FunctionDefinition = ChatCompletionCreateParams.Function
 
@@ -22,6 +27,7 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_OWNER = process.env.GITHUB_OWNER
 const GITHUB_REPO = process.env.GITHUB_REPO
+const ENABLE_ATHENA_CORE = process.env.ENABLE_ATHENA_CORE === 'true'
 
 if (!OPENAI_KEY) {
   throw new Error('OPENAI_API_KEY environment variable is required')
@@ -43,6 +49,27 @@ app.use(express.json({ limit: '5mb' }))
 const openai = new OpenAI({ apiKey: OPENAI_KEY })
 const git: SimpleGit = simpleGit(repoRoot)
 const octokit = new Octokit({ auth: GITHUB_TOKEN })
+
+const estimateTokenCount = (text: string): number =>
+  text
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean).length
+
+const legacyCompress = (input: AthenaCompressionInput): AthenaCompressionOutput => {
+  const originalTokens = estimateTokenCount(input.text)
+  const compressedTokens = Math.max(1, Math.floor(originalTokens * 0.85))
+  const savings = originalTokens - compressedTokens
+
+  return {
+    id: input.id,
+    originalTokens,
+    compressedTokens,
+    savings,
+    ratio: compressedTokens / Math.max(originalTokens, 1),
+    text: input.text
+  }
+}
 
 const resolvePathWithinRepo = (filepath: string): string => {
   const absolutePath = path.resolve(repoRoot, filepath)
@@ -250,6 +277,50 @@ const fnHandlers: HandlerMap = {
     }
   }
 }
+
+app.post('/api/codex/compress', async (req: Request, res: Response) => {
+  const { id, text, message } = req.body ?? {}
+  const content =
+    typeof text === 'string'
+      ? text
+      : typeof message === 'string'
+        ? message
+        : ''
+
+  if (!content.trim()) {
+    res.status(400).json({ error: 'text is required' })
+    return
+  }
+
+  const requestId = typeof id === 'string' && id.trim() ? id : `codex-${Date.now()}`
+  const input: AthenaCompressionInput = {
+    id: requestId,
+    text: content,
+    metadata: { source: 'codex-http' }
+  }
+
+  try {
+    let output: AthenaCompressionOutput
+    if (ENABLE_ATHENA_CORE) {
+      console.log('[AthenaCore] Using compressWithAthena for /api/codex/compress')
+      output = await compressWithAthena(input)
+    } else {
+      output = legacyCompress(input)
+    }
+
+    res.json({
+      id: output.id,
+      originalTokens: output.originalTokens,
+      compressedTokens: output.compressedTokens,
+      savings: output.savings,
+      ratio: output.ratio,
+      text: output.text ?? content
+    })
+  } catch (error) {
+    console.error('Compression failed', error)
+    res.status(500).json({ error: 'Compression failed' })
+  }
+})
 
 async function runChatLoop(messages: ChatCompletionMessageParam[]) {
   let response = await openai.chat.completions.create({
