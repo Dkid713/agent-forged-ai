@@ -50,6 +50,32 @@ The service can run with the legacy compression path or with the Athena Core pip
 
    With `ENABLE_ATHENA_CORE=true`, the request flows through Athena Core and emits `[AthenaCore]` logs. With the flag unset, it uses the legacy fallback but returns the same response shape.
 
+## Quick sanity checks
+
+Run these to confirm both compression paths behave as expected on your machine:
+
+- **Legacy mode** (no extra env needed)
+
+  ```bash
+  npm install
+  npm run dev
+  curl -X POST http://localhost:3000/api/codex/compress \
+    -H 'Content-Type: application/json' \
+    -d '{"id":"demo","text":"Hello Athena"}'
+  ```
+
+- **Athena Core mode** (flag enabled)
+
+  ```bash
+  npm install
+  ENABLE_ATHENA_CORE=true npm run dev
+  curl -X POST http://localhost:3000/api/codex/compress \
+    -H 'Content-Type: application/json' \
+    -d '{"id":"demo-athena","text":"Hello Athena with flag on"}'
+  ```
+
+The second run should include `[AthenaCore]` log lines while keeping the same response schema.
+
 ## Endpoint behavior
 
 - **Request body**: `{ "id?": string, "text"?: string, "message"?: string }` (`text` and `message` are interchangeable).
