@@ -64,6 +64,3 @@
 - Should Gen1/Gen2 outputs feed transformed text into Gen3 for more realistic savings math?
 - Adding automated tests for the new route (flag on/off) would help guard the integration.
 
----
-
-You can now give this whole task list to Codex.
