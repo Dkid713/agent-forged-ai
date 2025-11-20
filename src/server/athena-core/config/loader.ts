@@ -1,39 +1,9 @@
 import fs from 'fs'
 import path from 'path'
+import { defaultAthenaConfig } from '../../../shared/athena-core/config'
 import type { AthenaConfig } from '../types/core'
 
 const CONFIG_FILENAME = 'athena.config.yml'
-
-const defaultConfig: AthenaConfig = {
-  version: 1,
-  service: 'athena-core',
-  telemetry: {
-    enabled: true,
-    sampleRate: 1,
-    kpiWindowSize: 10000
-  },
-  gen1: {
-    enabled: true,
-    maxExpansionRatio: 1,
-    rulesetVersion: '1.0'
-  },
-  gen2: {
-    enabled: true,
-    dictionaryVersion: '1.0',
-    minSavingsTokens: 4
-  },
-  gen3: {
-    enabled: true,
-    model: 'text-embeddings',
-    minClusterSize: 12,
-    minConceptGain: 128
-  },
-  feedback: {
-    enabled: true,
-    minDeltaSavingsTokens: 64,
-    safetyFirst: true
-  }
-}
 
 function parseScalar(value: string): unknown {
   const normalized = value.trim()
@@ -82,33 +52,33 @@ const candidatePaths = [
 export function loadAthenaConfig(): AthenaConfig {
   const foundPath = candidatePaths.find((candidate) => fs.existsSync(candidate))
   if (!foundPath) {
-    return defaultConfig
+    return defaultAthenaConfig
   }
 
   const fileContents = fs.readFileSync(foundPath, 'utf-8')
   const parsed = parseBasicYaml(fileContents) as Partial<AthenaConfig> | undefined
 
   return {
-    ...defaultConfig,
+    ...defaultAthenaConfig,
     ...parsed,
     telemetry: {
-      ...defaultConfig.telemetry,
+      ...defaultAthenaConfig.telemetry,
       ...(parsed?.telemetry ?? {})
     },
     gen1: {
-      ...defaultConfig.gen1,
+      ...defaultAthenaConfig.gen1,
       ...(parsed?.gen1 ?? {})
     },
     gen2: {
-      ...defaultConfig.gen2,
+      ...defaultAthenaConfig.gen2,
       ...(parsed?.gen2 ?? {})
     },
     gen3: {
-      ...defaultConfig.gen3,
+      ...defaultAthenaConfig.gen3,
       ...(parsed?.gen3 ?? {})
     },
     feedback: {
-      ...defaultConfig.feedback,
+      ...defaultAthenaConfig.feedback,
       ...(parsed?.feedback ?? {})
     }
   }

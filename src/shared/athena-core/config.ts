@@ -38,3 +38,34 @@ export interface AthenaConfig {
   feedback: FeedbackConfig
   telemetry: TelemetryConfig
 }
+
+export const defaultAthenaConfig: AthenaConfig = {
+  service: 'athena-core',
+  version: 1,
+  gen1: {
+    enabled: true,
+    maxExpansionRatio: 1,
+    rulesetVersion: 'gen1-v1.0.0'
+  },
+  gen2: {
+    enabled: true,
+    dictionaryVersion: 'gen2-dict-v1.0.0',
+    minSavingsTokens: 4
+  },
+  gen3: {
+    enabled: true,
+    model: 'text-embeddings',
+    minClusterSize: 12,
+    minConceptGain: 128
+  },
+  feedback: {
+    enabled: true,
+    minDeltaSavingsTokens: 64,
+    safetyFirst: true
+  },
+  telemetry: {
+    enabled: true,
+    sampleRate: 1,
+    kpiWindowSize: 10000
+  }
+}

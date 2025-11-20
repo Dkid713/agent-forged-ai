@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import { defaultAthenaConfig } from "../../shared/athena-core/config"
 import type { AthenaConfig } from "../types/core"
 
 const DEFAULT_CONFIG_PATH = path.join(
@@ -9,37 +10,6 @@ const DEFAULT_CONFIG_PATH = path.join(
   "config",
   "athena.config.yml"
 )
-
-const defaultConfig: AthenaConfig = {
-  service: "crux-agi-core",
-  version: 1,
-  gen1: {
-    enabled: true,
-    maxExpansionRatio: 1,
-    rulesetVersion: "gen1-v1.0.0"
-  },
-  gen2: {
-    enabled: true,
-    dictionaryVersion: "gen2-dict-v1.0.0",
-    minSavingsTokens: 4
-  },
-  gen3: {
-    enabled: true,
-    model: "text-embeddings",
-    minClusterSize: 12,
-    minConceptGain: 128
-  },
-  feedback: {
-    enabled: true,
-    minDeltaSavingsTokens: 64,
-    safetyFirst: true
-  },
-  telemetry: {
-    enabled: true,
-    sampleRate: 1,
-    kpiWindowSize: 10000
-  }
-}
 
 function parseScalar(value: string): unknown {
   const normalized = value.trim()
@@ -97,11 +67,11 @@ function mergeConfig(
 
 export function loadAthenaConfig(configPath: string = DEFAULT_CONFIG_PATH): AthenaConfig {
   if (!fs.existsSync(configPath)) {
-    return defaultConfig
+    return defaultAthenaConfig
   }
 
   const raw = fs.readFileSync(configPath, "utf-8")
   const parsed = parseBasicYaml(raw) as Partial<AthenaConfig>
 
-  return mergeConfig(defaultConfig, parsed)
+  return mergeConfig(defaultAthenaConfig, parsed)
 }

@@ -1,3 +1,5 @@
+version: 1
+service: athena-core
 
 gen1:
   enabled: true

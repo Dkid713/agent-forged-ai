@@ -7,10 +7,10 @@ telemetry:
 gen1:
   enabled: true
   maxExpansionRatio: 1.0
-  rulesetVersion: "1.0"
+  rulesetVersion: "gen1-v1.0.0"
 gen2:
   enabled: true
-  dictionaryVersion: "1.0"
+  dictionaryVersion: "gen2-dict-v1.0.0"
   minSavingsTokens: 4
 gen3:
   enabled: true

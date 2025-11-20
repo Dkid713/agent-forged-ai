@@ -30,15 +30,15 @@ const GITHUB_REPO = process.env.GITHUB_REPO
 const ENABLE_ATHENA_CORE = process.env.ENABLE_ATHENA_CORE === 'true'
 
 if (!OPENAI_KEY) {
-  throw new Error('OPENAI_API_KEY environment variable is required')
+  console.warn('OPENAI_API_KEY not set. /chat endpoint will be disabled until provided.')
 }
 
 if (!GITHUB_TOKEN) {
-  throw new Error('GITHUB_TOKEN environment variable is required')
+  console.warn('GITHUB_TOKEN not set. GitHub PR automation will be disabled until provided.')
 }
 
 if (!GITHUB_OWNER || !GITHUB_REPO) {
-  throw new Error('GITHUB_OWNER and GITHUB_REPO environment variables are required')
+  console.warn('GITHUB_OWNER and GITHUB_REPO not fully set. GitHub PR automation will be disabled until provided.')
 }
 
 const repoRoot = process.cwd()
@@ -46,9 +46,16 @@ const repoRoot = process.cwd()
 const app = express()
 app.use(express.json({ limit: '5mb' }))
 
-const openai = new OpenAI({ apiKey: OPENAI_KEY })
+const openai = OPENAI_KEY ? new OpenAI({ apiKey: OPENAI_KEY }) : null
 const git: SimpleGit = simpleGit(repoRoot)
-const octokit = new Octokit({ auth: GITHUB_TOKEN })
+const octokit = GITHUB_TOKEN ? new Octokit({ auth: GITHUB_TOKEN }) : null
+const githubRepoConfig =
+  GITHUB_OWNER && GITHUB_REPO
+    ? {
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO
+      }
+    : null
 
 const estimateTokenCount = (text: string): number =>
   text
@@ -263,9 +270,13 @@ const fnHandlers: HandlerMap = {
       throw new Error('head and title must be strings')
     }
     const baseBranch = typeof base === 'string' ? base : 'main'
+    if (!octokit || !githubRepoConfig) {
+      throw new Error('GitHub credentials are not configured; set GITHUB_TOKEN/GITHUB_OWNER/GITHUB_REPO')
+    }
+
     const response = await octokit.pulls.create({
-      owner: GITHUB_OWNER!,
-      repo: GITHUB_REPO!,
+      owner: githubRepoConfig.owner,
+      repo: githubRepoConfig.repo,
       head,
       base: baseBranch,
       title,
@@ -323,6 +334,10 @@ app.post('/api/codex/compress', async (req: Request, res: Response) => {
 })
 
 async function runChatLoop(messages: ChatCompletionMessageParam[]) {
+  if (!openai) {
+    throw new Error('OPENAI_API_KEY is required to use the /chat endpoint')
+  }
+
   let response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages,
@@ -379,6 +394,13 @@ app.post('/chat', async (req: Request, res: Response) => {
   }
 
   const messages: ChatCompletionMessageParam[] = incoming as ChatCompletionMessageParam[]
+
+  if (!openai) {
+    res
+      .status(503)
+      .json({ error: 'OPENAI_API_KEY is not configured; /chat endpoint is disabled.' })
+    return
+  }
 
   try {
     const reply = await runChatLoop(messages)
