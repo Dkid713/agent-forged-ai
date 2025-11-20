@@ -1,0 +1,23 @@
+version: 1
+service: athena-core
+telemetry:
+  enabled: true
+  sampleRate: 1.0
+  kpiWindowSize: 10000
+gen1:
+  enabled: true
+  maxExpansionRatio: 1.0
+  rulesetVersion: "1.0"
+gen2:
+  enabled: true
+  dictionaryVersion: "1.0"
+  minSavingsTokens: 4
+gen3:
+  enabled: true
+  model: text-embeddings
+  minClusterSize: 12
+  minConceptGain: 128
+feedback:
+  enabled: true
+  minDeltaSavingsTokens: 64
+  safetyFirst: true
