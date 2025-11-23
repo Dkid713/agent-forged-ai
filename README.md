@@ -84,6 +84,8 @@ The second run should include `[AthenaCore]` log lines while keeping the same re
 - `scripts/`: helper scripts such as `clone_cruxagi.sh`.
 - `tests/`: home for automated tests (placeholder until suites are added).
 
+Additional design notes live in `docs/ai-native-os-kernel-reference.md`, which summarizes the AI-Native OS kernel API and developer guide from the v0.1 release.
+
 ## Endpoint behavior
 
 - **Request body**: `{ "id?": string, "text"?: string, "message"?: string }` (`text` and `message` are interchangeable).
