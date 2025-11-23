@@ -5,8 +5,10 @@ import { DefaultGen3Engine } from "./gen3/semanticEngine";
 import { DefaultFeedbackManager } from "./feedback/feedbackManager";
 import { Telemetry } from "./telemetry/metrics";
 import { CompressionInput, CompressionOutput, LayerContext } from "./types/core";
+import { ATHENA_OMEGA_BASELINE_GEN580 } from "../shared/athena-core/athenaOmegaBaseline";
 
 const config = loadAthenaConfig();
+const omegaPsiKuramoto = ATHENA_OMEGA_BASELINE_GEN580.parameters;
 const gen1 = new DefaultGen1Engine(config.gen1.rulesetVersion);
 const gen2 = new DefaultGen2Engine([]);
 const gen3 = new DefaultGen3Engine();
@@ -19,6 +21,7 @@ export async function compressWithAthena(
   const ctx: LayerContext = {
     requestId: input.id,
     config,
+    omegaPsiKuramoto,
   };
 
   // Forward path: Gen1 → Gen2
@@ -44,6 +47,7 @@ export async function runFeedbackCycle(
   const ctx: LayerContext = {
     requestId: `feedback-${Date.now()}`,
     config,
+    omegaPsiKuramoto,
   };
   await feedbackManager.runCycle(batch, ctx);
 }

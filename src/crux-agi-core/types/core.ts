@@ -6,6 +6,7 @@ import type {
   Gen3Config,
   TelemetryConfig
 } from "../../shared/athena-core/config";
+import type { AthenaOmegaParams } from "../../shared/athena-core/athenaOmegaBaseline";
 
 export type LayerName = "gen1" | "gen2" | "gen3";
 
@@ -44,6 +45,7 @@ export interface LayerContext {
   requestId: string;
   config: AthenaConfig;
   // extensible for caches, embeddings, etc.
+  omegaPsiKuramoto: AthenaOmegaParams;
 }
 
 export type {

@@ -1,4 +1,5 @@
 import type { AthenaConfig } from '../../../shared/athena-core/config'
+import type { AthenaOmegaParams } from '../../../shared/athena-core/athenaOmegaBaseline'
 
 export interface CompressionInput {
   id: string
@@ -18,6 +19,7 @@ export interface CompressionOutput {
 export interface LayerContext {
   requestId: string
   config: AthenaConfig
+  omegaPsiKuramoto: AthenaOmegaParams
 }
 
 export type { AthenaConfig }
