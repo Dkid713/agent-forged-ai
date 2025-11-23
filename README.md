@@ -1,154 +1,102 @@
 # agent-forged-ai
 
-This repository provides utilities for working with external AI-related projects.
+A lightweight HTTP service that exposes:
 
-## Autonomous AGI microservice
+- `/api/codex/compress` for simple text compression
+- `/chat` for OpenAI function-calling (requires an API key)
 
-The `autonomous-server` service exposes an HTTP API on port `3000` that allows an OpenAI model to observe and act on this repository. It supports reading and writing files, running shell commands, managing git branches, and opening GitHub pull requests.
+The service can run with the legacy compression path or with the Athena Core pipeline.
 
-### Requirements
+## Quickstart
 
-Set the following environment variables before starting the service:
+1. Install dependencies
 
-- `OPENAI_API_KEY`
-- `GITHUB_TOKEN`
-- `GITHUB_OWNER`
-- `GITHUB_REPO`
-- `AUTONOMOUS_AGI_PORT` (optional, defaults to `3000`)
+   ```bash
+   npm install
+   ```
 
-### Install dependencies
+2. (Optional) Clone the CruxAGI-AVI dependency if you want the auxiliary repository locally
 
-```bash
-npm install
-```
+   ```bash
+   ./scripts/clone_cruxagi.sh
+   ```
 
-### Start the service in development
+3. Start the development server
 
-```bash
-npm run dev
-```
+   - Legacy compression (no extra env needed):
 
-### Build and run in production
+     ```bash
+     npm run dev
+     ```
 
-```bash
-npm run build
-npm start
-```
+   - Athena Core compression:
 
-### Chat endpoint
+     ```bash
+     ENABLE_ATHENA_CORE=true npm run dev
+     ```
 
-Send a POST request to `http://localhost:3000/chat` with a JSON payload:
+   - Optional integrations:
+     - `OPENAI_API_KEY` enables the `/chat` endpoint.
+     - `GITHUB_TOKEN`, `GITHUB_OWNER`, and `GITHUB_REPO` enable GitHub PR automation used by the `/chat` functions.
+     - `AUTONOMOUS_AGI_PORT` can override the default port `3000`.
 
-```json
-{
-  "messages": [
-    { "role": "system", "content": "You are a helpful code assistant." },
-    { "role": "user", "content": "Inspect the repository." }
-  ]
-}
-```
+4. Test the compression endpoint
 
-The service will loop on OpenAI function-calls until the model returns a final assistant message.
+   ```bash
+   curl -X POST http://localhost:3000/api/codex/compress \
+     -H 'Content-Type: application/json' \
+     -d '{"id":"demo-1","text":"This is a simple compression test."}'
+   ```
 
-## Cloning the CRUX AGI AVI repository
+   With `ENABLE_ATHENA_CORE=true`, the request flows through Athena Core and emits `[AthenaCore]` logs. With the flag unset, it uses the legacy fallback but returns the same response shape.
 
-If you want to clone [`Dkid713/cruxagi-avi-advanced-virtual-intelligence`](https://github.com/Dkid713/cruxagi-avi-advanced-virtual-intelligence), you can use the helper script provided in [`scripts/clone_cruxagi.sh`](scripts/clone_cruxagi.sh).
+## Quick sanity checks
 
-```bash
-./scripts/clone_cruxagi.sh
-```
+Run these to confirm both compression paths behave as expected on your machine:
 
-The script defaults to cloning the repository into a local folder named `cruxagi-avi-advanced-virtual-intelligence`. You can override the destination or source URL:
+- **Legacy mode** (no extra env needed)
 
-```bash
-./scripts/clone_cruxagi.sh <repo-url> <target-directory>
-```
+  ```bash
+  npm install
+  npm run dev
+  curl -X POST http://localhost:3000/api/codex/compress \
+    -H 'Content-Type: application/json' \
+    -d '{"id":"demo","text":"Hello Athena"}'
+  ```
 
-For example, to clone into `~/projects/cruxagi`:
+- **Athena Core mode** (flag enabled)
 
-```bash
-./scripts/clone_cruxagi.sh https://github.com/Dkid713/cruxagi-avi-advanced-virtual-intelligence.git ~/projects/cruxagi
-```
+  ```bash
+  npm install
+  ENABLE_ATHENA_CORE=true npm run dev
+  curl -X POST http://localhost:3000/api/codex/compress \
+    -H 'Content-Type: application/json' \
+    -d '{"id":"demo-athena","text":"Hello Athena with flag on"}'
+  ```
 
-Make sure that `git` is installed on your system before running the script.
-## Operational Status
+The second run should include `[AthenaCore]` log lines while keeping the same response schema.
 
-🎉 **All API Keys Confirmed Active!**
+## Repository layout
 
-Your Athena AGI Engine is fully operational with all major AI providers:
+- `src/`: application source code.
+- `config/`: central configuration, including `athena.config.yml` shared by Athena-aware components.
+- `docs/`: project documentation and integration notes.
+- `scripts/`: helper scripts such as `clone_cruxagi.sh`.
+- `tests/`: home for automated tests (placeholder until suites are added).
 
-- ✅ **OpenAI** – GPT-4o, GPT-4o-mini, O1 (reasoning)
-- ✅ **Anthropic** – Claude-3.5-Sonnet, Opus, Haiku
-- ✅ **xAI** – Grok-3-mini, Grok-2, Grok-4
-- ✅ **Perplexity** – Real-time search, citations
-- ✅ **OpenRouter** – 100+ models, auto-fallback
+Additional design notes live in `docs/ai-native-os-kernel-reference.md`, which summarizes the AI-Native OS kernel API and developer guide from the v0.1 release.
 
-## Available Capabilities
+## Endpoint behavior
 
-1. **GitHub Codex Integration**
-   - Dictionary compression (⟦0⟧ tokens)
-   - Four codecs: bracket, hex, hybrid, codex
-   - Endpoint: `/api/codex/compress`
-2. **Athena AGI Engine**
-   - Evolution Engine (AI-generated code proposals)
-   - Skills Marketplace (goal planning & execution)
-   - Advanced compression (benefit gates, μ-classification)
-   - Endpoints: `/api/athena/*` (7 endpoints)
-3. **Multi-Provider Smart Routing**
-   - Math/Code → Grok-3-mini ($0.07/1M tokens)
-   - Research → Perplexity ($1/1M tokens)
-   - Reasoning → GPT-4o-mini ($0.15/1M tokens)
-   - Writing → Claude-3-Haiku ($0.25/1M tokens)
-   - Fallback → OpenRouter (auto-select)
-4. **Complete Compression Pipeline**
-   - Gen1: Self-learning compression
-   - Gen3: Semantic acronym compression (AI→ML→NLP)
-   - Omega: Full pipeline (Pre→Gate→Post→Learn)
-   - Codex: Dictionary-based tokens
-5. **Production Infrastructure**
-   - 62+ API endpoints
-   - Real-time telemetry & monitoring
-   - Circuit breakers & rate limits
-   - AAP compliance headers
-   - Full observability
+- **Request body**: `{ "id?": string, "text"?: string, "message"?: string }` (`text` and `message` are interchangeable).
+- **Response body**: `{ id, originalTokens, compressedTokens, savings, ratio, text }`.
+- The response shape is stable in both Athena and legacy modes.
 
-## Cost Optimization
+## Athena configuration
 
-The system automatically routes requests to the most cost-effective model compared to GPT-4o:
+Athena Core reads from `config/athena.config.yml`. Default values are shared across server code, the Crux AGI utilities, and the shared config types. You can adjust the YAML if you need to tune defaults; the loaders will also fall back to legacy paths under `src/**/config/athena.config.yml` if needed.
 
-| Query Type       | Model          | Relative Cost |
-|------------------|----------------|---------------|
-| Math             | Grok-3-mini    | 36× cheaper   |
-| Simple reasoning | GPT-4o-mini    | 17× cheaper   |
-| Writing          | Claude-Haiku   | 10× cheaper   |
+## Notes on optional dependencies
 
-## Quick Tests
-
-```bash
-# Check the status of all providers
-curl https://YOUR-URL/api/athena/status
-
-# Generate evolution proposals with real AI
-curl -X POST https://YOUR-URL/api/athena/evolution/proposals \
-  -d '{"telemetry":{...},"codeGraph":{...}}'
-
-# Use the skills marketplace planner
-curl -X POST https://YOUR-URL/api/athena/plan \
-  -d '{"goal":{...}}'
-
-# Compress a message with GitHub Codex
-curl -X POST https://YOUR-URL/api/codex/compress \
-  -d '{"message":"text to compress"}'
-```
-
-## Summary
-
-You have successfully integrated:
-
-- ✅ GitHub Codex module from your repo
-- ✅ Athena Evolution + Skills engines
-- ✅ All five major AI providers
-- ✅ Smart cost-optimized routing
-- ✅ Production-grade infrastructure
-
-Your AGI platform is complete and operational. 🎯
+- The CruxAGI-AVI repository is optional for running this service. Use `./scripts/clone_cruxagi.sh` if you need it locally.
+- The `/chat` endpoint and GitHub automation are disabled unless the relevant environment variables are provided; the server still starts without them.

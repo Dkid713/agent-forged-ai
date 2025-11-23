@@ -1,0 +1,28 @@
+version: 1
+service: athena-core
+
+gen1:
+  enabled: true
+  maxExpansionRatio: 1.00          # never allow > 0% net expansion
+  rulesetVersion: "gen1-v1.0.0"
+
+gen2:
+  enabled: true
+  dictionaryVersion: "gen2-dict-v1.0.0"
+  minSavingsTokens: 4              # minimum net benefit threshold
+
+gen3:
+  enabled: true
+  model: "text-embeddings"
+  minClusterSize: 12
+  minConceptGain: 128              # min tokens saved to treat concept as valuable
+
+feedback:
+  enabled: true
+  minDeltaSavingsTokens: 64        # require real impact
+  safetyFirst: true
+
+telemetry:
+  enabled: true
+  sampleRate: 1.0
+  kpiWindowSize: 10000

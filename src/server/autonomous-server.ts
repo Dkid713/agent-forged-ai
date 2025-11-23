@@ -10,6 +10,11 @@ import path from 'path'
 import { spawnSync } from 'child_process'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { Octokit } from '@octokit/rest'
+import { compressWithAthena } from './athena-core'
+import type {
+  CompressionInput as AthenaCompressionInput,
+  CompressionOutput as AthenaCompressionOutput
+} from './athena-core'
 
 type FunctionDefinition = ChatCompletionCreateParams.Function
 
@@ -22,25 +27,65 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
 const GITHUB_OWNER = process.env.GITHUB_OWNER
 const GITHUB_REPO = process.env.GITHUB_REPO
+const ENABLE_ATHENA_CORE = process.env.ENABLE_ATHENA_CORE === 'true'
 
 if (!OPENAI_KEY) {
-  throw new Error('OPENAI_API_KEY environment variable is required')
+  console.warn('OPENAI_API_KEY not set. /chat endpoint will be disabled until provided.')
 }
 
 if (!GITHUB_TOKEN) {
-  throw new Error('GITHUB_TOKEN environment variable is required')
+  console.warn('GITHUB_TOKEN not set. GitHub PR automation will be disabled until provided.')
 }
 
 if (!GITHUB_OWNER || !GITHUB_REPO) {
-  throw new Error('GITHUB_OWNER and GITHUB_REPO environment variables are required')
+  console.warn('GITHUB_OWNER and GITHUB_REPO not fully set. GitHub PR automation will be disabled until provided.')
 }
+
+const repoRoot = process.cwd()
 
 const app = express()
 app.use(express.json({ limit: '5mb' }))
 
-const openai = new OpenAI({ apiKey: OPENAI_KEY })
-const git: SimpleGit = simpleGit(process.cwd())
-const octokit = new Octokit({ auth: GITHUB_TOKEN })
+const openai = OPENAI_KEY ? new OpenAI({ apiKey: OPENAI_KEY }) : null
+const git: SimpleGit = simpleGit(repoRoot)
+const octokit = GITHUB_TOKEN ? new Octokit({ auth: GITHUB_TOKEN }) : null
+const githubRepoConfig =
+  GITHUB_OWNER && GITHUB_REPO
+    ? {
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO
+      }
+    : null
+
+const estimateTokenCount = (text: string): number =>
+  text
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean).length
+
+const legacyCompress = (input: AthenaCompressionInput): AthenaCompressionOutput => {
+  const originalTokens = estimateTokenCount(input.text)
+  const compressedTokens = Math.max(1, Math.floor(originalTokens * 0.85))
+  const savings = originalTokens - compressedTokens
+
+  return {
+    id: input.id,
+    originalTokens,
+    compressedTokens,
+    savings,
+    ratio: compressedTokens / Math.max(originalTokens, 1),
+    text: input.text
+  }
+}
+
+const resolvePathWithinRepo = (filepath: string): string => {
+  const absolutePath = path.resolve(repoRoot, filepath)
+  const relativePath = path.relative(repoRoot, absolutePath)
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    throw new Error('Access outside the repository root is not allowed')
+  }
+  return absolutePath
+}
 
 const functions: FunctionDefinition[] = [
   {
@@ -170,7 +215,7 @@ const fnHandlers: HandlerMap = {
     if (typeof filepath !== 'string') {
       throw new Error('filepath must be a string')
     }
-    const absolutePath = path.resolve(process.cwd(), filepath)
+    const absolutePath = resolvePathWithinRepo(filepath)
     const content = await fs.readFile(absolutePath, 'utf-8')
     return { content }
   },
@@ -178,7 +223,7 @@ const fnHandlers: HandlerMap = {
     if (typeof filepath !== 'string' || typeof content !== 'string') {
       throw new Error('filepath and content must be strings')
     }
-    const absolutePath = path.resolve(process.cwd(), filepath)
+    const absolutePath = resolvePathWithinRepo(filepath)
     await fs.writeFile(absolutePath, content, 'utf-8')
     return { success: true }
   },
@@ -225,9 +270,13 @@ const fnHandlers: HandlerMap = {
       throw new Error('head and title must be strings')
     }
     const baseBranch = typeof base === 'string' ? base : 'main'
+    if (!octokit || !githubRepoConfig) {
+      throw new Error('GitHub credentials are not configured; set GITHUB_TOKEN/GITHUB_OWNER/GITHUB_REPO')
+    }
+
     const response = await octokit.pulls.create({
-      owner: GITHUB_OWNER!,
-      repo: GITHUB_REPO!,
+      owner: githubRepoConfig.owner,
+      repo: githubRepoConfig.repo,
       head,
       base: baseBranch,
       title,
@@ -240,7 +289,55 @@ const fnHandlers: HandlerMap = {
   }
 }
 
+app.post('/api/codex/compress', async (req: Request, res: Response) => {
+  const { id, text, message } = req.body ?? {}
+  const content =
+    typeof text === 'string'
+      ? text
+      : typeof message === 'string'
+        ? message
+        : ''
+
+  if (!content.trim()) {
+    res.status(400).json({ error: 'text is required' })
+    return
+  }
+
+  const requestId = typeof id === 'string' && id.trim() ? id : `codex-${Date.now()}`
+  const input: AthenaCompressionInput = {
+    id: requestId,
+    text: content,
+    metadata: { source: 'codex-http' }
+  }
+
+  try {
+    let output: AthenaCompressionOutput
+    if (ENABLE_ATHENA_CORE) {
+      console.log('[AthenaCore] Using compressWithAthena for /api/codex/compress')
+      output = await compressWithAthena(input)
+    } else {
+      output = legacyCompress(input)
+    }
+
+    res.json({
+      id: output.id,
+      originalTokens: output.originalTokens,
+      compressedTokens: output.compressedTokens,
+      savings: output.savings,
+      ratio: output.ratio,
+      text: output.text ?? content
+    })
+  } catch (error) {
+    console.error('Compression failed', error)
+    res.status(500).json({ error: 'Compression failed' })
+  }
+})
+
 async function runChatLoop(messages: ChatCompletionMessageParam[]) {
+  if (!openai) {
+    throw new Error('OPENAI_API_KEY is required to use the /chat endpoint')
+  }
+
   let response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages,
@@ -297,6 +394,13 @@ app.post('/chat', async (req: Request, res: Response) => {
   }
 
   const messages: ChatCompletionMessageParam[] = incoming as ChatCompletionMessageParam[]
+
+  if (!openai) {
+    res
+      .status(503)
+      .json({ error: 'OPENAI_API_KEY is not configured; /chat endpoint is disabled.' })
+    return
+  }
 
   try {
     const reply = await runChatLoop(messages)
