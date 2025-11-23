@@ -86,6 +86,26 @@ The second run should include `[AthenaCore]` log lines while keeping the same re
 
 Additional design notes live in `docs/ai-native-os-kernel-reference.md`, which summarizes the AI-Native OS kernel API and developer guide from the v0.1 release.
 
+## Python CLI prototype
+
+For a runnable Python demonstration of the CruxAGI compression, Hive6D coordination, and agent spawning flows, use `scripts/ai_native_os_cli.py`.
+
+Examples:
+
+```bash
+# Compress a file with LZMA and emit a JSON summary (preset 0-9)
+python scripts/ai_native_os_cli.py compress ./README.md ./README.md.xz --preset 6
+
+# Generate Hive6D-style random coordination slots for 5 agents across 6 dimensions
+# Optional --seed provides reproducible assignments
+python scripts/ai_native_os_cli.py coordinate --agents 5 --dimensions 6 --seed 42
+
+# Spawn a simulated agent bound to a semantic graph name
+python scripts/ai_native_os_cli.py spawn knowledge-graph-A
+```
+
+No external dependencies are required beyond a standard Python 3 interpreter.
+
 ## Endpoint behavior
 
 - **Request body**: `{ "id?": string, "text"?: string, "message"?: string }` (`text` and `message` are interchangeable).
