@@ -4,9 +4,11 @@ import { DefaultGen2Engine } from './gen2/templateEngine'
 import { DefaultGen3Engine } from './gen3/semanticEngine'
 import { DefaultFeedbackManager } from './feedback/feedbackManager'
 import { Telemetry } from './telemetry/metrics'
+import { ATHENA_OMEGA_BASELINE_GEN580 } from '../../shared/athena-core/athenaOmegaBaseline'
 import type { CompressionInput, CompressionOutput, LayerContext } from './types/core'
 
 const config = loadAthenaConfig()
+const omegaPsiKuramoto = ATHENA_OMEGA_BASELINE_GEN580.parameters
 const gen1 = new DefaultGen1Engine(config.gen1.rulesetVersion)
 const gen2 = new DefaultGen2Engine([])
 const gen3 = new DefaultGen3Engine()
@@ -37,7 +39,8 @@ export async function compressWithAthena(
 ): Promise<CompressionOutput> {
   const ctx: LayerContext = {
     requestId: input.id,
-    config
+    config,
+    omegaPsiKuramoto
   }
 
   let currentOutput: CompressionOutput | null = null
@@ -86,7 +89,8 @@ export async function compressWithAthena(
 export async function runAthenaFeedback(batch: CompressionInput[]): Promise<void> {
   const ctx: LayerContext = {
     requestId: `feedback-${Date.now()}`,
-    config
+    config,
+    omegaPsiKuramoto
   }
   await feedbackManager.runCycle(batch, ctx)
 }
