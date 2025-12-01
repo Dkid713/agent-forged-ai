@@ -69,7 +69,8 @@ echo "Setting remote URL with authentication..."
 git remote set-url "$REMOTE_NAME" "$NEW_URL"
 
 # Verify the change (but don't display the token)
-VERIFY_URL=$(git remote get-url "$REMOTE_NAME" | sed "s/${GITHUB_TOKEN}/***TOKEN***/g")
+# Use printf to safely escape special characters in the token
+VERIFY_URL=$(git remote get-url "$REMOTE_NAME" | awk -v token="$GITHUB_TOKEN" '{gsub(token, "***TOKEN***"); print}')
 echo "Remote URL updated: $VERIFY_URL"
 echo ""
 echo "✓ Git remote is now configured with authentication"
@@ -77,6 +78,11 @@ echo ""
 echo "You can now push changes to the repository:"
 echo "  git push $REMOTE_NAME main"
 echo ""
-echo "Note: Your token is now stored in the git config."
-echo "To remove it later, run:"
+echo "⚠️  SECURITY WARNING:"
+echo "Your token is stored in PLAINTEXT in .git/config and can be viewed by anyone"
+echo "with access to this repository directory. Consider using SSH keys or a"
+echo "credential helper for better security:"
+echo "  https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git"
+echo ""
+echo "To remove the token from git config, run:"
 echo "  git remote set-url $REMOTE_NAME https://github.com/$REPO_OWNER/$REPO_NAME.git"
