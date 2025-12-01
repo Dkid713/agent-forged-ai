@@ -100,3 +100,26 @@ Athena Core reads from `config/athena.config.yml`. Default values are shared acr
 
 - The CruxAGI-AVI repository is optional for running this service. Use `./scripts/clone_cruxagi.sh` if you need it locally.
 - The `/chat` endpoint and GitHub automation are disabled unless the relevant environment variables are provided; the server still starts without them.
+
+## Git authentication setup
+
+If you need to push changes to the repository with authentication:
+
+1. **Using the setup script** (recommended):
+
+   ```bash
+   ./scripts/setup_git_remote.sh YOUR_GITHUB_TOKEN
+   ```
+
+2. **Manual setup**:
+
+   ```bash
+   git remote set-url origin https://YOUR_TOKEN@github.com/Dkid713/agent-forged-ai.git
+   git push origin main
+   ```
+
+To create a GitHub Personal Access Token:
+- Visit https://github.com/settings/tokens
+- Click "Generate new token" (classic)
+- Grant the token `repo` permissions
+- Copy the token and use it in the commands above
